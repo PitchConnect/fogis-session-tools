@@ -10,10 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag fogis-session-tools:$(date +%s)
+    - name: Set up Docker Compose
+      run: |
+        docker compose version
     - name: Test Docker Compose
       run: |
-        docker-compose build
-        docker-compose config
+        docker compose build
+        docker compose config

@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from fogis_session_tools.fogis_session_keeper import SessionKeeper
+# Mock the FogisApiClient import
+with patch("fogis_session_tools.fogis_session_keeper.FogisApiClient") as mock_fogis_api_client:
+    # Now import the SessionKeeper
+    from fogis_session_tools.fogis_session_keeper import SessionKeeper
 
 
 class TestSessionKeeper(unittest.TestCase):
@@ -12,24 +15,24 @@ class TestSessionKeeper(unittest.TestCase):
         self.mock_client = MagicMock()
         self.mock_client.get_cookies.return_value = {"cookie1": "value1"}
         self.mock_client.validate_cookies.return_value = True
+        
+        # Reset the mock for each test
+        mock_fogis_api_client.reset_mock()
+        mock_fogis_api_client.return_value = self.mock_client
 
     def test_init_with_client(self):
         """Test initializing with a client."""
         keeper = SessionKeeper(client=self.mock_client)
         self.assertEqual(keeper.client, self.mock_client)
 
-    @patch("fogis_session_tools.fogis_session_keeper.FogisApiClient")
-    def test_init_with_credentials(self, mock_fogis_api_client):
+    def test_init_with_credentials(self):
         """Test initializing with credentials."""
-        mock_fogis_api_client.return_value = self.mock_client
         keeper = SessionKeeper(username="test_user", password="test_pass")
         mock_fogis_api_client.assert_called_once_with(username="test_user", password="test_pass")
         self.assertEqual(keeper.client, self.mock_client)
 
-    @patch("fogis_session_tools.fogis_session_keeper.FogisApiClient")
-    def test_init_with_cookies(self, mock_fogis_api_client):
+    def test_init_with_cookies(self):
         """Test initializing with cookies."""
-        mock_fogis_api_client.return_value = self.mock_client
         cookies = {"cookie1": "value1"}
         keeper = SessionKeeper(cookies=cookies)
         mock_fogis_api_client.assert_called_once_with(cookies=cookies)
@@ -47,6 +50,10 @@ class TestSessionKeeper(unittest.TestCase):
         mock_thread.return_value = mock_thread_instance
 
         keeper = SessionKeeper(client=self.mock_client)
+        
+        # Mock the validate_cookies method
+        keeper.client.validate_cookies.return_value = True
+        
         keeper.start()
 
         self.assertTrue(keeper.running)
